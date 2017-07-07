@@ -32,8 +32,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* @flow */
 /* eslint-disable sort-keys */
 
-const ExpectationFailed = require('../ExpectationFailed');
-const expectationResultFactory = require('../expectationResultFactory');
+import ExpectationFailed from '../expectation_failed';
+
+import expectationResultFactory from '../expectation_result_factory';
 
 function Spec(attrs: Object) {
   this.resultCallback = attrs.resultCallback || function() {};
@@ -124,7 +125,7 @@ Spec.prototype.onException = function onException(error) {
   }
 
   if (error instanceof require('assert').AssertionError) {
-    const assertionErrorMessage = require('../assert-support');
+    const assertionErrorMessage = require('../assert_support');
     error = assertionErrorMessage(error, {expand: this.expand});
   }
 
@@ -195,9 +196,11 @@ const extractCustomPendingMessage = function(e) {
 Spec.pendingSpecExceptionMessage = '=> marked Pending';
 
 Spec.isPendingSpecException = function(e) {
-  return !!(e &&
+  return !!(
+    e &&
     e.toString &&
-    e.toString().indexOf(Spec.pendingSpecExceptionMessage) !== -1);
+    e.toString().indexOf(Spec.pendingSpecExceptionMessage) !== -1
+  );
 };
 
 module.exports = Spec;

@@ -10,10 +10,10 @@
 
 import type {Options} from './types';
 
-const {ChildProcess} = require('child_process');
-const EventEmitter = require('events');
-const ProjectWorkspace = require('./ProjectWorkspace');
-const {createProcess} = require('./Process');
+import {ChildProcess} from 'child_process';
+import EventEmitter from 'events';
+import ProjectWorkspace from './project_workspace';
+import {createProcess} from './Process';
 
 // This class represents the the configuration of Jest's process
 // we want to start with the defaults then override whatever they output
@@ -56,7 +56,9 @@ module.exports = class Settings extends EventEmitter {
   }
 
   getConfig(completed: any) {
-    this.getConfigProcess = this._createProcess(this.workspace, ['--showConfig']);
+    this.getConfigProcess = this._createProcess(this.workspace, [
+      '--showConfig',
+    ]);
 
     this.getConfigProcess.stdout.on('data', (data: Buffer) => {
       const {config, version} = JSON.parse(data.toString());
@@ -68,7 +70,7 @@ module.exports = class Settings extends EventEmitter {
       this.settings = config;
     });
 
-    // They could have an older build of Jest which 
+    // They could have an older build of Jest which
     // would error with `--showConfig`
     this.getConfigProcess.on('close', () => {
       completed();

@@ -12,22 +12,22 @@ import type {Argv} from 'types/Argv';
 import type {GlobalConfig} from 'types/Config';
 import type {Context} from 'types/Context';
 
-const ansiEscapes = require('ansi-escapes');
-const chalk = require('chalk');
-const {replacePathSepForRegex} = require('jest-regex-util');
-const HasteMap = require('jest-haste-map');
-const isCI = require('is-ci');
-const isValidPath = require('./lib/isValidPath');
-const preRunMessage = require('./preRunMessage');
-const createContext = require('./lib/createContext');
-const runJest = require('./runJest');
-const updateArgv = require('./lib/updateArgv');
-const SearchSource = require('./SearchSource');
-const TestWatcher = require('./TestWatcher');
-const Prompt = require('./lib/Prompt');
-const TestPathPatternPrompt = require('./TestPathPatternPrompt');
-const TestNamePatternPrompt = require('./TestNamePatternPrompt');
-const {KEYS, CLEAR} = require('./constants');
+import ansiEscapes from 'ansi-escapes';
+import chalk from 'chalk';
+import {replacePathSepForRegex} from 'jest-regex-util';
+import HasteMap from 'jest-haste-map';
+import isCI from 'is-ci';
+import isValidPath from './lib/is_valid_path';
+import preRunMessage from './pre_run_message';
+import createContext from './lib/create_context';
+import runJest from './run_jest';
+import updateArgv from './lib/update_argv';
+import SearchSource from './search_source';
+import TestWatcher from './test_watcher';
+import Prompt from './lib/Prompt';
+import TestPathPatternPrompt from './test_path_pattern_prompt';
+import TestNamePatternPrompt from './test_name_pattern_prompt';
+import {KEYS, CLEAR} from './constants';
 
 const isInteractive = process.stdout.isTTY && !isCI;
 let hasExitListener = false;
@@ -290,15 +290,15 @@ const usage = (argv, snapshotFailure, delimiter = '\n') => {
       ? chalk.dim(' \u203A Press ') + 'a' + chalk.dim(' to run all tests.')
       : null,
     (argv.watchAll || argv.testPathPattern || argv.testNamePattern) &&
-      !argv.noSCM
+    !argv.noSCM
       ? chalk.dim(' \u203A Press ') +
-          'o' +
-          chalk.dim(' to only run tests related to changed files.')
+        'o' +
+        chalk.dim(' to only run tests related to changed files.')
       : null,
     snapshotFailure
       ? chalk.dim(' \u203A Press ') +
-          'u' +
-          chalk.dim(' to update failing snapshots.')
+        'u' +
+        chalk.dim(' to update failing snapshots.')
       : null,
     chalk.dim(' \u203A Press ') +
       'p' +

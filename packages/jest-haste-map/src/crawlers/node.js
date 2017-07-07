@@ -11,11 +11,10 @@
 import type {InternalHasteMap} from 'types/HasteMap';
 import type {IgnoreMatcher, CrawlerOptions} from '../types';
 
-const fs = require('fs');
-const path = require('path');
-const {spawn} = require('child_process');
-
-const H = require('../constants');
+import fs from 'fs';
+import path from 'path';
+import {spawn} from 'child_process';
+import H from '../constants';
 
 type Callback = (result: Array<[/* id */ string, /* mtime */ number]>) => void;
 
@@ -65,7 +64,11 @@ function find(
     });
   }
 
-  roots.forEach(search);
+  if (roots.length > 0) {
+    roots.forEach(search);
+  } else {
+    callback(result);
+  }
 }
 
 function findNative(
@@ -77,7 +80,7 @@ function findNative(
   const args = [].concat(roots);
   args.push('-type', 'f');
   if (extensions.length) {
-    args.push('\(');
+    args.push('(');
   }
   extensions.forEach((ext, index) => {
     if (index) {
@@ -87,7 +90,7 @@ function findNative(
     args.push('*.' + ext);
   });
   if (extensions.length) {
-    args.push('\)');
+    args.push(')');
   }
 
   const child = spawn('find', args);

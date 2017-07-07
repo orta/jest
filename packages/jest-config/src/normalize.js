@@ -11,32 +11,31 @@
 import type {Argv} from 'types/Argv';
 import type {InitialOptions, ReporterConfig} from 'types/Config';
 
-const crypto = require('crypto');
-const path = require('path');
-const {ValidationError, validate} = require('jest-validate');
-const chalk = require('chalk');
-const glob = require('glob');
-const Resolver = require('jest-resolve');
-const utils = require('jest-regex-util');
-
-const {
+import crypto from 'crypto';
+import path from 'path';
+import {ValidationError, validate} from 'jest-validate';
+import chalk from 'chalk';
+import glob from 'glob';
+import Resolver from 'jest-resolve';
+import utils from 'jest-regex-util';
+import {
   BULLET,
   DOCUMENTATION_NOTE,
   _replaceRootDirInPath,
   _replaceRootDirTags,
   getTestEnvironment,
   resolve,
-} = require('./utils');
-const {
+} from './utils';
+import {
   NODE_MODULES,
   DEFAULT_JS_PATTERN,
   DEFAULT_REPORTER_LABEL,
-} = require('./constants');
-const {validateReporters} = require('./reporterValidationErrors');
-const DEFAULT_CONFIG = require('./defaults');
-const DEPRECATED_CONFIG = require('./deprecated');
-const setFromArgv = require('./setFromArgv');
-const VALID_CONFIG = require('./validConfig');
+} from './constants';
+import {validateReporters} from './reporter_validation_errors';
+import DEFAULT_CONFIG from './defaults';
+import DEPRECATED_CONFIG from './deprecated';
+import setFromArgv from './set_from_argv';
+import VALID_CONFIG from './valid_config';
 const ERROR = `${BULLET}Validation Error`;
 const JSON_EXTENSION = '.json';
 const PRESET_NAME = 'jest-preset' + JSON_EXTENSION;
@@ -77,6 +76,7 @@ const setupPreset = (
   if (options.moduleNameMapper && preset.moduleNameMapper) {
     options.moduleNameMapper = Object.assign(
       {},
+      options.moduleNameMapper,
       preset.moduleNameMapper,
       options.moduleNameMapper,
     );
@@ -176,15 +176,21 @@ const normalizeUnmockedModulePathPatterns = (
 const normalizePreprocessor = (options: InitialOptions): InitialOptions => {
   if (options.scriptPreprocessor && options.transform) {
     throw createConfigError(
-      `  Options: ${chalk.bold('scriptPreprocessor')} and ${chalk.bold('transform')} cannot be used together.
+      `  Options: ${chalk.bold('scriptPreprocessor')} and ${chalk.bold(
+        'transform',
+      )} cannot be used together.
   Please change your configuration to only use ${chalk.bold('transform')}.`,
     );
   }
 
   if (options.preprocessorIgnorePatterns && options.transformIgnorePatterns) {
     throw createConfigError(
-      `  Options ${chalk.bold('preprocessorIgnorePatterns')} and ${chalk.bold('transformIgnorePatterns')} cannot be used together.
-  Please change your configuration to only use ${chalk.bold('transformIgnorePatterns')}.`,
+      `  Options ${chalk.bold('preprocessorIgnorePatterns')} and ${chalk.bold(
+        'transformIgnorePatterns',
+      )} cannot be used together.
+  Please change your configuration to only use ${chalk.bold(
+    'transformIgnorePatterns',
+  )}.`,
     );
   }
 
@@ -237,13 +243,13 @@ const normalizeReporters = (options: InitialOptions, basedir) => {
 
   validateReporters(reporters);
   options.reporters = reporters.map(reporterConfig => {
-    const normalizedReporterConfig: ReporterConfig = typeof reporterConfig ===
-      'string'
-      ? // if reporter config is a string, we wrap it in an array
-        // and pass an empty object for options argument, to normalize
-        // the shape.
-        [reporterConfig, {}]
-      : reporterConfig;
+    const normalizedReporterConfig: ReporterConfig =
+      typeof reporterConfig === 'string'
+        ? // if reporter config is a string, we wrap it in an array
+          // and pass an empty object for options argument, to normalize
+          // the shape.
+          [reporterConfig, {}]
+        : reporterConfig;
 
     const reporterPath = _replaceRootDirInPath(
       options.rootDir,
@@ -299,6 +305,10 @@ function normalize(options: InitialOptions, argv: Argv) {
 
   if (!options.testRunner || options.testRunner === 'jasmine2') {
     options.testRunner = require.resolve('jest-jasmine2');
+  }
+
+  if (!options.coverageDirectory) {
+    options.coverageDirectory = path.resolve(options.rootDir, 'coverage');
   }
 
   const babelJest = setupBabelJest(options);
@@ -436,9 +446,10 @@ function normalize(options: InitialOptions, argv: Argv) {
     return newOptions;
   }, newOptions);
 
-  newOptions.updateSnapshot = argv.ci && !argv.updateSnapshot
-    ? 'none'
-    : argv.updateSnapshot ? 'all' : 'new';
+  newOptions.updateSnapshot =
+    argv.ci && !argv.updateSnapshot
+      ? 'none'
+      : argv.updateSnapshot ? 'all' : 'new';
 
   if (babelJest) {
     const regeneratorRuntimePath = Resolver.findNodeModule(

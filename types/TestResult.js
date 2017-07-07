@@ -62,6 +62,7 @@ export type CoverageMap = {|
 |};
 
 export type SerializableError = {|
+  code?: mixed,
   message: string,
   stack: ?string,
   type?: string,
@@ -84,7 +85,7 @@ export type Milliseconds = number;
 
 export type AssertionResult = {|
   ancestorTitles: Array<string>,
-  duration?: Milliseconds,
+  duration?: ?Milliseconds,
   failureMessages: Array<string>,
   fullName: string,
   numPassingAsserts: number,

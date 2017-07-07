@@ -134,7 +134,7 @@ const languages = [
     tag: 'ro',
   },
   {
-    enabled: false,
+    enabled: true,
     name: 'Русский',
     tag: 'ru',
   },
@@ -159,7 +159,7 @@ const languages = [
     tag: 'tr',
   },
   {
-    enabled: false,
+    enabled: true,
     name: 'Українська',
     tag: 'uk',
   },
@@ -169,10 +169,14 @@ const languages = [
     tag: 'vi',
   },
   {
-    enabled: false,
-    name: '中文',
+    enabled: true,
+    name: '简体中文',
     tag: 'zh-Hans',
   },
-  {enabled: false, name: '繁體中文', tag: 'zh-Hant'},
+  {
+    enabled: false,
+    name: '繁體中文',
+    tag: 'zh-Hant',
+  },
 ];
 module.exports = languages;

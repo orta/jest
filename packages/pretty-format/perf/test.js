@@ -6,13 +6,14 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-const util = require('util');
+import util from 'util';
+
 const chalk = require('chalk');
 const React = require('react');
 const ReactTestRenderer = require('react-test-renderer');
 const leftPad = require('left-pad');
 const prettyFormat = require('../build');
-const ReactTestComponent = require('../build/plugins/ReactTestComponent');
+const ReactTestComponent = require('../build/plugins/react_test_component');
 const worldGeoJson = require('./world.geo.json');
 
 const NANOSECONDS = 1000000000;
@@ -50,9 +51,8 @@ function testCase(name, fn) {
 }
 
 function test(name, value, ignoreResult, prettyFormatOpts) {
-  const formatted = testCase(
-    'prettyFormat()  ',
-    () => prettyFormat(value, prettyFormatOpts)
+  const formatted = testCase('prettyFormat()  ', () =>
+    prettyFormat(value, prettyFormatOpts),
   );
 
   const inspected = testCase('util.inspect()  ', () => {
@@ -74,7 +74,7 @@ function test(name, value, ignoreResult, prettyFormatOpts) {
 
   results.forEach((item, index) => {
     item.isWinner = index === 0;
-    item.isLoser  = index === results.length - 1;
+    item.isLoser = index === results.length - 1;
   });
 
   function log(current) {
@@ -85,8 +85,11 @@ function test(name, value, ignoreResult, prettyFormatOpts) {
     }
     if (current.total) {
       message +=
-        ' - ' + (current.total / NANOSECONDS) + 's total (' +
-        TIMES_TO_RUN + ' runs)';
+        ' - ' +
+        current.total / NANOSECONDS +
+        's total (' +
+        TIMES_TO_RUN +
+        ' runs)';
     }
     if (current.error) {
       message += ' - Error: ' + current.error.message;
@@ -102,11 +105,11 @@ function test(name, value, ignoreResult, prettyFormatOpts) {
       message = chalk.dim(message);
     }
 
-    const diff = (current.time - winner.time);
+    const diff = current.time - winner.time;
 
-    if (diff > (winner.time * 0.85)) {
+    if (diff > winner.time * 0.85) {
       message = chalk.bgRed.black(message);
-    } else if (diff > (winner.time * 0.65)) {
+    } else if (diff > winner.time * 0.65) {
       message = chalk.bgYellow.black(message);
     } else if (!current.error) {
       message = chalk.bgGreen.black(message);
@@ -165,7 +168,7 @@ objectWithPropsAndSymbols[Symbol('symbol2')] = 'value3';
 test('an object with properties and symbols', objectWithPropsAndSymbols);
 test('an object with sorted properties', {a: 2, b: 1});
 test('regular expressions from constructors', new RegExp('regexp'));
-test('regular expressions from literals', /regexp/ig);
+test('regular expressions from literals', /regexp/gi);
 test('an empty set', new Set());
 const setWithValues = new Set();
 setWithValues.add('value1');
@@ -198,11 +201,11 @@ const element = React.createElement(
   {onClick: () => {}, prop: {a: 1, b: 2}},
   React.createElement('div', {prop: {a: 1, b: 2}}),
   React.createElement('div'),
-  React.createElement('div', {prop: {a: 1, b: 2}},
-    React.createElement('div', null,
-      React.createElement('div')
-    )
-  )
+  React.createElement(
+    'div',
+    {prop: {a: 1, b: 2}},
+    React.createElement('div', null, React.createElement('div')),
+  ),
 );
 
 test('react', ReactTestRenderer.create(element).toJSON(), false, {

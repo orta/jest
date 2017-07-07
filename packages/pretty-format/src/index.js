@@ -12,11 +12,19 @@ import type {
   Colors,
   Refs,
   StringOrNull,
+  Plugin,
   Plugins,
   Options,
 } from 'types/PrettyFormat';
 
-const style = require('ansi-styles');
+import style from 'ansi-styles';
+
+import AsymmetricMatcher from './plugins/asymmetric_matcher';
+import ConvertAnsi from './plugins/convert_ansi';
+import HTMLElement from './plugins/html_element';
+import Immutable from './plugins/immutable_plugins';
+import ReactElement from './plugins/react_element';
+import ReactTestComponent from './plugins/react_test_component';
 
 type Theme = {|
   comment?: string,
@@ -29,14 +37,12 @@ type Theme = {|
 type InitialOptions = {|
   callToJSON?: boolean,
   escapeRegex?: boolean,
-  edgeSpacing?: string,
   highlight?: boolean,
   indent?: number,
   maxDepth?: number,
   min?: boolean,
   plugins?: Plugins,
   printFunctionName?: boolean,
-  spacing?: string,
   theme?: Theme,
 |};
 
@@ -50,6 +56,10 @@ const SYMBOL_REGEXP = /^Symbol\((.*)\)(.*)$/;
 const NEWLINE_REGEXP = /\n/gi;
 
 const getSymbols = Object.getOwnPropertySymbols || (obj => []);
+
+const isSymbol = key =>
+  // $FlowFixMe string literal `symbol`. This value is not a valid `typeof` return value
+  typeof key === 'symbol' || toString.call(key) === '[object Symbol]';
 
 function isToStringedArrayType(toStringed: string): boolean {
   return (
@@ -394,14 +404,7 @@ function printObject(
   const symbols = getSymbols(val);
 
   if (symbols.length) {
-    keys = keys
-      .filter(
-        key =>
-          // $FlowFixMe string literal `symbol`. This value is not a valid `typeof` return value
-          !(typeof key === 'symbol' ||
-            toString.call(key) === '[object Symbol]'),
-      )
-      .concat(symbols);
+    keys = keys.filter(key => !isSymbol(key)).concat(symbols);
   }
 
   if (keys.length) {
@@ -666,6 +669,7 @@ function printComplexValue(
 }
 
 function printPlugin(
+  plugin: Plugin,
   val,
   indent: string,
   prevIndent: string,
@@ -680,20 +684,7 @@ function printPlugin(
   printFunctionName: boolean,
   escapeRegex: boolean,
   colors: Colors,
-): StringOrNull {
-  let plugin;
-
-  for (let p = 0; p < plugins.length; p++) {
-    if (plugins[p].test(val)) {
-      plugin = plugins[p];
-      break;
-    }
-  }
-
-  if (!plugin) {
-    return null;
-  }
-
+): string {
   function boundPrint(val) {
     return print(
       val,
@@ -723,7 +714,24 @@ function printPlugin(
     min,
     spacing,
   };
-  return plugin.print(val, boundPrint, boundIndent, opts, colors);
+
+  const printed = plugin.print(val, boundPrint, boundIndent, opts, colors);
+  if (typeof printed !== 'string') {
+    throw new Error(
+      `pretty-format: Plugin must return type "string" but instead returned "${typeof printed}".`,
+    );
+  }
+  return printed;
+}
+
+function findPlugin(plugins: Plugins, val: any) {
+  for (let p = 0; p < plugins.length; p++) {
+    if (plugins[p].test(val)) {
+      return plugins[p];
+    }
+  }
+
+  return null;
 }
 
 function print(
@@ -742,24 +750,25 @@ function print(
   escapeRegex: boolean,
   colors: Colors,
 ): string {
-  const pluginsResult = printPlugin(
-    val,
-    indent,
-    prevIndent,
-    spacing,
-    edgeSpacing,
-    refs,
-    maxDepth,
-    currentDepth,
-    plugins,
-    min,
-    callToJSON,
-    printFunctionName,
-    escapeRegex,
-    colors,
-  );
-  if (typeof pluginsResult === 'string') {
-    return pluginsResult;
+  const plugin = findPlugin(plugins, val);
+  if (plugin !== null) {
+    return printPlugin(
+      plugin,
+      val,
+      indent,
+      prevIndent,
+      spacing,
+      edgeSpacing,
+      refs,
+      maxDepth,
+      currentDepth,
+      plugins,
+      min,
+      callToJSON,
+      printFunctionName,
+      escapeRegex,
+      colors,
+    );
   }
 
   const basicResult = printBasicValue(val, printFunctionName, escapeRegex);
@@ -787,7 +796,6 @@ function print(
 
 const DEFAULTS: Options = {
   callToJSON: true,
-  edgeSpacing: '\n',
   escapeRegex: false,
   highlight: false,
   indent: 2,
@@ -795,7 +803,6 @@ const DEFAULTS: Options = {
   min: false,
   plugins: [],
   printFunctionName: true,
-  spacing: '\n',
   theme: {
     comment: 'gray',
     content: 'reset',
@@ -888,40 +895,38 @@ function prettyFormat(val: any, initialOptions?: InitialOptions): string {
         typeof color.open !== 'string'
       ) {
         throw new Error(
-          `pretty-format: Option "theme" has a key "${key}" whose value "${opts.theme[key]}" is undefined in ansi-styles.`,
+          `pretty-format: Option "theme" has a key "${key}" whose value "${opts
+            .theme[key]}" is undefined in ansi-styles.`,
         );
       }
     }
   });
 
-  let indent;
-  let refs;
   const prevIndent = '';
   const currentDepth = 0;
   const spacing = opts.min ? ' ' : '\n';
   const edgeSpacing = opts.min ? '' : '\n';
 
   if (opts && opts.plugins.length) {
-    indent = createIndent(opts.indent);
-    refs = [];
-    const pluginsResult = printPlugin(
-      val,
-      indent,
-      prevIndent,
-      spacing,
-      edgeSpacing,
-      refs,
-      opts.maxDepth,
-      currentDepth,
-      opts.plugins,
-      opts.min,
-      opts.callToJSON,
-      opts.printFunctionName,
-      opts.escapeRegex,
-      colors,
-    );
-    if (typeof pluginsResult === 'string') {
-      return pluginsResult;
+    const plugin = findPlugin(opts.plugins, val);
+    if (plugin !== null) {
+      return printPlugin(
+        plugin,
+        val,
+        createIndent(opts.indent),
+        prevIndent,
+        spacing,
+        edgeSpacing,
+        [],
+        opts.maxDepth,
+        currentDepth,
+        opts.plugins,
+        opts.min,
+        opts.callToJSON,
+        opts.printFunctionName,
+        opts.escapeRegex,
+        colors,
+      );
     }
   }
 
@@ -934,19 +939,13 @@ function prettyFormat(val: any, initialOptions?: InitialOptions): string {
     return basicResult;
   }
 
-  if (!indent) {
-    indent = createIndent(opts.indent);
-  }
-  if (!refs) {
-    refs = [];
-  }
   return printComplexValue(
     val,
-    indent,
+    createIndent(opts.indent),
     prevIndent,
     spacing,
     edgeSpacing,
-    refs,
+    [],
     opts.maxDepth,
     currentDepth,
     opts.plugins,
@@ -959,12 +958,12 @@ function prettyFormat(val: any, initialOptions?: InitialOptions): string {
 }
 
 prettyFormat.plugins = {
-  AsymmetricMatcher: require('./plugins/AsymmetricMatcher'),
-  ConvertAnsi: require('./plugins/ConvertAnsi'),
-  HTMLElement: require('./plugins/HTMLElement'),
-  Immutable: require('./plugins/ImmutablePlugins'),
-  ReactElement: require('./plugins/ReactElement'),
-  ReactTestComponent: require('./plugins/ReactTestComponent'),
+  AsymmetricMatcher,
+  ConvertAnsi,
+  HTMLElement,
+  Immutable,
+  ReactElement,
+  ReactTestComponent,
 };
 
 module.exports = prettyFormat;

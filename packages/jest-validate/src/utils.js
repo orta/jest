@@ -8,7 +8,10 @@
  * @flow
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
+import prettyFormat from 'pretty-format';
+import leven from 'leven';
+
 const BULLET: string = chalk.bold('\u25cf');
 const DEPRECATION = `${BULLET} Deprecation Warning`;
 const ERROR = `${BULLET} Validation Error`;
@@ -17,7 +20,7 @@ const WARNING = `${BULLET} Validation Warning`;
 const format = (value: any): string =>
   typeof value === 'function'
     ? value.toString()
-    : require('pretty-format')(value, {min: true});
+    : prettyFormat(value, {min: true});
 
 class ValidationError extends Error {
   name: string;
@@ -45,7 +48,6 @@ const createDidYouMeanMessage = (
   unrecognized: string,
   allowedOptions: Array<string>,
 ) => {
-  const leven = require('leven');
   const suggestion = allowedOptions.find(option => {
     const steps: number = leven(option, unrecognized);
     return steps < 3;

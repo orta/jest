@@ -11,9 +11,9 @@
 import type {Path} from 'types/Config';
 import type {AggregatedResult} from 'types/TestResult';
 
-const path = require('path');
-const chalk = require('chalk');
-const slash = require('slash');
+import path from 'path';
+import chalk from 'chalk';
+import slash from 'slash';
 
 type SummaryOptions = {|
   estimatedTime?: number,
@@ -141,9 +141,10 @@ const getSummary = (
 
 const renderTime = (runTime, estimatedTime, width) => {
   // If we are more than one second over the estimated time, highlight it.
-  const renderedTime = estimatedTime && runTime >= estimatedTime + 1
-    ? chalk.bold.yellow(runTime + 's')
-    : runTime + 's';
+  const renderedTime =
+    estimatedTime && runTime >= estimatedTime + 1
+      ? chalk.bold.yellow(runTime + 's')
+      : runTime + 's';
   let time = chalk.bold(`Time:`) + `        ${renderedTime}`;
   if (runTime < estimatedTime) {
     time += `, estimated ${estimatedTime}s`;
@@ -160,8 +161,8 @@ const renderTime = (runTime, estimatedTime, width) => {
     if (availableWidth >= 2) {
       time +=
         '\n' +
-        chalk.green.inverse(' ').repeat(length) +
-        chalk.white.inverse(' ').repeat(availableWidth - length);
+        chalk.green('█').repeat(length) +
+        chalk.white('█').repeat(availableWidth - length);
     }
   }
   return time;

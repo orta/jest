@@ -10,10 +10,10 @@
 
 import type {Path} from 'types/Config';
 
-const path = require('path');
-const {ValidationError} = require('jest-validate');
-const Resolver = require('jest-resolve');
-const chalk = require('chalk');
+import path from 'path';
+import {ValidationError} from 'jest-validate';
+import Resolver from 'jest-resolve';
+import chalk from 'chalk';
 const BULLET: string = chalk.bold('\u25cf ');
 const DOCUMENTATION_NOTE = `  ${chalk.bold('Configuration Documentation:')}
   https://facebook.github.io/jest/docs/configuration.html
@@ -37,7 +37,9 @@ const resolve = (rootDir: string, key: string, filePath: Path) => {
 
   if (!module) {
     throw createValidationError(
-      `  Module ${chalk.bold(filePath)} in the ${chalk.bold(key)} option was not found.`,
+      `  Module ${chalk.bold(filePath)} in the ${chalk.bold(
+        key,
+      )} option was not found.`,
     );
   }
 
@@ -59,9 +61,10 @@ const _replaceRootDirInObject = (rootDir: string, config: any): Object => {
   if (config !== null) {
     const newConfig = {};
     for (const configKey in config) {
-      newConfig[configKey] = configKey === 'rootDir'
-        ? config[configKey]
-        : _replaceRootDirTags(rootDir, config[configKey]);
+      newConfig[configKey] =
+        configKey === 'rootDir'
+          ? config[configKey]
+          : _replaceRootDirTags(rootDir, config[configKey]);
     }
     return newConfig;
   }
@@ -115,7 +118,11 @@ const getTestEnvironment = (config: Object) => {
   } catch (e) {}
 
   throw createValidationError(
-    `  Test environment ${chalk.bold(env)} cannot be found. Make sure the ${chalk.bold('testEnvironment')} configuration option points to an existing node module.`,
+    `  Test environment ${chalk.bold(
+      env,
+    )} cannot be found. Make sure the ${chalk.bold(
+      'testEnvironment',
+    )} configuration option points to an existing node module.`,
   );
 };
 

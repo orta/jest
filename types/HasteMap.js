@@ -21,8 +21,14 @@ export type ModuleMapData = {[id: string]: ModuleMapItem};
 export type WatchmanClocks = {[filepath: Path]: string};
 export type HasteRegExp = RegExp | ((str: string) => boolean);
 
+export type DuplicatesSet = {[filePath: string]: /* type */ number};
+export type DuplicatesIndex = {
+  [id: string]: {[platform: string]: DuplicatesSet},
+};
+
 export type InternalHasteMap = {|
   clocks: WatchmanClocks,
+  duplicates: DuplicatesIndex,
   files: FileData,
   map: ModuleMapData,
   mocks: MockData,
@@ -35,6 +41,7 @@ export type HasteMap = {|
 |};
 
 export type RawModuleMap = {|
+  duplicates: DuplicatesIndex,
   map: ModuleMapData,
   mocks: MockData,
 |};

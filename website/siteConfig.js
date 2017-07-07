@@ -10,7 +10,8 @@ const githubButton = (
     data-count-href="/facebook/jest/stargazers"
     data-count-api="/repos/facebook/jest#stargazers_count"
     data-count-aria-label="# stargazers on GitHub"
-    aria-label="Star facebook/jest on GitHub">
+    aria-label="Star facebook/jest on GitHub"
+  >
     Star
   </a>
 );
@@ -69,6 +70,11 @@ const users = [
     image: '/jest/img/logos/nyt.png',
     infoLink: 'http://www.nytimes.com/',
     pinned: true,
+  },
+  {
+    caption: 'Airbnb',
+    image: '/jest/img/logos/airbnb.svg',
+    infoLink: 'https://www.airbnb.com/',
   },
   {
     caption: 'IBM',
@@ -229,6 +235,11 @@ const users = [
     caption: 'Sprout Social',
     image: '/jest/img/logos/sproutsocial.png',
     infoLink: 'https://sproutsocial.com/',
+  },
+  {
+    caption: 'Squarespace',
+    image: '/jest/img/logos/squarespace.png',
+    infoLink: 'https://squarespace.com/',
   },
   {
     caption: 'Trivago',

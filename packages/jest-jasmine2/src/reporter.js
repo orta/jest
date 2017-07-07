@@ -18,7 +18,7 @@ import type {
   TestResult,
 } from 'types/TestResult';
 
-const {formatResultsErrors} = require('jest-message-util');
+import {formatResultsErrors} from 'jest-message-util';
 
 type Suite = {
   description: string,
@@ -149,9 +149,8 @@ class Jasmine2Reporter {
   ): AssertionResult {
     const start = this._startTimes.get(specResult.id);
     const duration = start ? Date.now() - start : undefined;
-    const status = specResult.status === 'disabled'
-      ? 'pending'
-      : specResult.status;
+    const status =
+      specResult.status === 'disabled' ? 'pending' : specResult.status;
     const results = {
       ancestorTitles,
       duration,
@@ -163,9 +162,10 @@ class Jasmine2Reporter {
     };
 
     specResult.failedExpectations.forEach(failed => {
-      const message = !failed.matcherName && failed.stack
-        ? this._addMissingMessageToStack(failed.stack, failed.message)
-        : failed.message || '';
+      const message =
+        !failed.matcherName && failed.stack
+          ? this._addMissingMessageToStack(failed.stack, failed.message)
+          : failed.message || '';
       results.failureMessages.push(message);
     });
 

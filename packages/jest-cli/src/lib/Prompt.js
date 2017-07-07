@@ -8,9 +8,9 @@
  * @flow
  */
 
-import type {ScrollOptions} from './scrollList';
+import type {ScrollOptions} from './scroll_list';
 
-const {KEYS} = require('../constants');
+import {KEYS} from '../constants';
 
 class Prompt {
   _entering: boolean;
@@ -90,9 +90,10 @@ class Prompt {
       default:
         const char = new Buffer(key, 'hex').toString();
 
-        this._value = key === KEYS.BACKSPACE
-          ? this._value.slice(0, -1)
-          : this._value + char;
+        this._value =
+          key === KEYS.BACKSPACE
+            ? this._value.slice(0, -1)
+            : this._value + char;
         this._typeaheadOffset = -1;
         this._typeaheadSelection = null;
         this._onChange();

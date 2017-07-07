@@ -19,28 +19,28 @@ import type {
   MockData,
 } from 'types/HasteMap';
 import type {WorkerMessage, WorkerMetadata, WorkerCallback} from './types';
+// eslint-disable-next-line import/no-duplicates
 import typeof HType from './constants';
 
-const EventEmitter = require('events');
-const os = require('os');
-const path = require('path');
-const crypto = require('crypto');
-const {execSync} = require('child_process');
-const fs = require('graceful-fs');
-const sane = require('sane');
-const workerFarm = require('worker-farm');
-
-const VERSION = require('../package.json').version;
-
-const H = require('./constants');
-const HasteFS = require('./HasteFS');
-const HasteModuleMap = require('./ModuleMap');
-const getMockName = require('./getMockName');
-
-const getPlatformExtension = require('./lib/getPlatformExtension');
-const nodeCrawl = require('./crawlers/node');
-const watchmanCrawl = require('./crawlers/watchman');
-const worker = require('./worker');
+import EventEmitter from 'events';
+import os from 'os';
+import path from 'path';
+import crypto from 'crypto';
+import {execSync} from 'child_process';
+import fs from 'graceful-fs';
+import sane from 'sane';
+import workerFarm from 'worker-farm';
+import {version as VERSION} from '../package.json';
+// eslint-disable-next-line import/no-duplicates
+import H from './constants';
+import HasteFS from './haste_fs';
+import HasteModuleMap from './module_map';
+import getMockName from './get_mock_name';
+import getPlatformExtension from './lib/get_platform_extension';
+import nodeCrawl from './crawlers/node';
+import normalizePathSep from './lib/normalize_path_sep';
+import watchmanCrawl from './crawlers/watchman';
+import worker from './worker';
 
 type Options = {
   cacheDirectory?: string,
@@ -156,7 +156,7 @@ const getWhiteList = (list: ?Array<string>): ?RegExp => {
  * };
  *
  * // Modules can be targeted to a specific platform based on the file name.
- * // Example: Platform.ios.js and Platform.android.js will both map to the same
+ * // Example: platform.ios.js and Platform.android.js will both map to the same
  * // `Platform` module. The platform should be specified during resolution.
  * type ModuleMapItem = {[platform: string]: ModuleMetaData};
  *
@@ -240,9 +240,12 @@ class HasteMap extends EventEmitter {
     this._watchers = [];
   }
 
-  static getCacheFilePath(tmpdir: Path, name: string): string {
-    const hash = crypto.createHash('md5');
-    Array.from(arguments).slice(1).forEach(arg => hash.update(arg));
+  static getCacheFilePath(
+    tmpdir: Path,
+    name: string,
+    ...extra: Array<string>
+  ): string {
+    const hash = crypto.createHash('md5').update(name + extra.join(''));
     return path.join(
       tmpdir,
       name.replace(/\W/g, '-') + '-' + hash.digest('hex'),
@@ -256,7 +259,11 @@ class HasteMap extends EventEmitter {
         .then(hasteMap => {
           this._persist(hasteMap);
           const hasteFS = new HasteFS(hasteMap.files);
-          const moduleMap = new HasteModuleMap(hasteMap.map, hasteMap.mocks);
+          const moduleMap = new HasteModuleMap({
+            duplicates: hasteMap.duplicates,
+            map: hasteMap.map,
+            mocks: hasteMap.mocks,
+          });
           const __hasteMapForTest =
             (process.env.NODE_ENV === 'test' && hasteMap) || null;
           return this._watch(hasteMap, hasteFS, moduleMap).then(() => ({
@@ -278,7 +285,11 @@ class HasteMap extends EventEmitter {
 
   readModuleMap(): ModuleMap {
     const data = this.read();
-    return new HasteModuleMap(data.map, data.mocks);
+    return new HasteModuleMap({
+      duplicates: data.duplicates,
+      map: data.map,
+      mocks: data.mocks,
+    });
   }
 
   /**
@@ -311,6 +322,7 @@ class HasteMap extends EventEmitter {
       const platform =
         getPlatformExtension(module[H.PATH], this._options.platforms) ||
         H.GENERIC_PLATFORM;
+
       const existingModule = moduleMap[platform];
       if (existingModule && existingModule[H.PATH] !== module[H.PATH]) {
         const message =
@@ -325,6 +337,28 @@ class HasteMap extends EventEmitter {
           throw new Error(message);
         }
         this._console.warn(message);
+        // We do NOT want consumers to use a module that is ambiguous.
+        delete moduleMap[platform];
+        if (Object.keys(moduleMap).length === 1) {
+          delete map[id];
+        }
+        let dupsByPlatform = hasteMap.duplicates[id];
+        if (dupsByPlatform == null) {
+          dupsByPlatform = hasteMap.duplicates[id] = (Object.create(null): any);
+        }
+        const dups = (dupsByPlatform[platform] = (Object.create(null): any));
+        dups[module[H.PATH]] = module[H.TYPE];
+        dups[existingModule[H.PATH]] = existingModule[H.TYPE];
+        return;
+      }
+
+      const dupsByPlatform = hasteMap.duplicates[id];
+      if (dupsByPlatform != null) {
+        const dups = dupsByPlatform[platform];
+        if (dups != null) {
+          dups[module[H.PATH]] = module[H.TYPE];
+        }
+        return;
       }
 
       moduleMap[platform] = module;
@@ -383,6 +417,9 @@ class HasteMap extends EventEmitter {
         fileMetadata[H.DEPENDENCIES] = metadata.dependencies || [];
       },
       error => {
+        if (['ENOENT', 'EACCES'].indexOf(error.code) < 0) {
+          throw error;
+        }
         // If a file cannot be read we remove it from the file list and
         // ignore the failure silently.
         delete hasteMap.files[filePath];
@@ -476,9 +513,8 @@ class HasteMap extends EventEmitter {
   _crawl(hasteMap: InternalHasteMap): Promise<InternalHasteMap> {
     const options = this._options;
     const ignore = this._ignore.bind(this);
-    const crawl = canUseWatchman && this._options.useWatchman
-      ? watchmanCrawl
-      : nodeCrawl;
+    const crawl =
+      canUseWatchman && this._options.useWatchman ? watchmanCrawl : nodeCrawl;
 
     const retry = error => {
       if (crawl === watchmanCrawl) {
@@ -539,17 +575,16 @@ class HasteMap extends EventEmitter {
     this._options.throwOnModuleCollision = false;
     this._options.retainAllFiles = true;
 
-    const Watcher = canUseWatchman && this._options.useWatchman
-      ? sane.WatchmanWatcher
-      : sane.NodeWatcher;
+    const Watcher =
+      canUseWatchman && this._options.useWatchman
+        ? sane.WatchmanWatcher
+        : os.platform() === 'darwin' ? sane.FSEventsWatcher : sane.NodeWatcher;
     const extensions = this._options.extensions;
     const ignorePattern = this._options.ignorePattern;
     let changeQueue = Promise.resolve();
     let eventsQueue = [];
     // We only need to copy the entire haste map once on every "frame".
     let mustCopy = true;
-
-    const copy = object => Object.assign(Object.create(null), object);
 
     const createWatcher = root => {
       const watcher = new Watcher(root, {
@@ -578,7 +613,11 @@ class HasteMap extends EventEmitter {
         this.emit('change', {
           eventsQueue,
           hasteFS: new HasteFS(hasteMap.files),
-          moduleMap: new HasteModuleMap(hasteMap.map, hasteMap.mocks),
+          moduleMap: new HasteModuleMap({
+            duplicates: hasteMap.duplicates,
+            map: hasteMap.map,
+            mocks: hasteMap.mocks,
+          }),
         });
         eventsQueue = [];
       }
@@ -590,7 +629,7 @@ class HasteMap extends EventEmitter {
       root: Path,
       stat: {mtime: Date},
     ) => {
-      filePath = path.join(root, filePath);
+      filePath = path.join(root, normalizePathSep(filePath));
       if (
         this._ignore(filePath) ||
         !extensions.some(extension => filePath.endsWith(extension))
@@ -619,6 +658,7 @@ class HasteMap extends EventEmitter {
             mustCopy = false;
             hasteMap = {
               clocks: copy(hasteMap.clocks),
+              duplicates: copy(hasteMap.duplicates),
               files: copy(hasteMap.files),
               map: copy(hasteMap.map),
               mocks: copy(hasteMap.mocks),
@@ -630,8 +670,23 @@ class HasteMap extends EventEmitter {
           // Delete the file and all of its metadata.
           const moduleName =
             hasteMap.files[filePath] && hasteMap.files[filePath][H.ID];
+          const platform: string =
+            getPlatformExtension(filePath, this._options.platforms) ||
+            H.GENERIC_PLATFORM;
+
           delete hasteMap.files[filePath];
-          delete hasteMap.map[moduleName];
+          let moduleMap = hasteMap.map[moduleName];
+          if (moduleMap != null) {
+            // We are forced to copy the object because jest-haste-map exposes
+            // the map as an immutable entity.
+            moduleMap = copy(moduleMap);
+            delete moduleMap[platform];
+            if (Object.keys(moduleMap).length === 0) {
+              delete hasteMap.map[moduleName];
+            } else {
+              hasteMap.map[moduleName] = moduleMap;
+            }
+          }
           if (
             this._options.mocksPattern &&
             this._options.mocksPattern.test(filePath)
@@ -639,6 +694,8 @@ class HasteMap extends EventEmitter {
             const mockName = getMockName(filePath);
             delete hasteMap.mocks[mockName];
           }
+
+          this._recoverDuplicates(hasteMap, filePath, moduleName);
 
           // If the file was added or changed,
           // parse it and update the haste map.
@@ -669,7 +726,9 @@ class HasteMap extends EventEmitter {
           return null;
         })
         .catch(error => {
-          this._console.error(`jest-haste-map: watch error:\n  ${error}\n`);
+          this._console.error(
+            `jest-haste-map: watch error:\n  ${error.stack}\n`,
+          );
         });
     };
 
@@ -679,6 +738,51 @@ class HasteMap extends EventEmitter {
     ).then(watchers => {
       this._watchers = watchers;
     });
+  }
+
+  /**
+   * This function should be called when the file under `filePath` is removed
+   * or changed. When that happens, we want to figure out if that file was
+   * part of a group of files that had the same ID. If it was, we want to
+   * remove it from the group. Furthermore, if there is only one file
+   * remaining in the group, then we want to restore that single file as the
+   * correct resolution for its ID, and cleanup the duplicates index.
+   */
+  _recoverDuplicates(
+    hasteMap: InternalHasteMap,
+    filePath: string,
+    moduleName: string,
+  ) {
+    let dupsByPlatform = hasteMap.duplicates[moduleName];
+    if (dupsByPlatform == null) {
+      return;
+    }
+    const platform =
+      getPlatformExtension(filePath, this._options.platforms) ||
+      H.GENERIC_PLATFORM;
+    let dups = dupsByPlatform[platform];
+    if (dups == null) {
+      return;
+    }
+    dupsByPlatform = hasteMap.duplicates[moduleName] = (copy(
+      dupsByPlatform,
+    ): any);
+    dups = dupsByPlatform[platform] = (copy(dups): any);
+    const dedupType = dups[filePath];
+    delete dups[filePath];
+    const filePaths = Object.keys(dups);
+    if (filePaths.length > 1) {
+      return;
+    }
+    let dedupMap = hasteMap.map[moduleName];
+    if (dedupMap == null) {
+      dedupMap = hasteMap.map[moduleName] = (Object.create(null): any);
+    }
+    dedupMap[platform] = [filePaths[0], dedupType];
+    delete dupsByPlatform[platform];
+    if (Object.keys(dupsByPlatform).length === 0) {
+      delete hasteMap.duplicates[moduleName];
+    }
   }
 
   end() {
@@ -699,9 +803,10 @@ class HasteMap extends EventEmitter {
    */
   _ignore(filePath: Path): boolean {
     const ignorePattern = this._options.ignorePattern;
-    const ignoreMatched = ignorePattern instanceof RegExp
-      ? ignorePattern.test(filePath)
-      : ignorePattern(filePath);
+    const ignoreMatched =
+      ignorePattern instanceof RegExp
+        ? ignorePattern.test(filePath)
+        : ignorePattern(filePath);
 
     return (
       ignoreMatched ||
@@ -725,6 +830,7 @@ class HasteMap extends EventEmitter {
   _createEmptyMap(): InternalHasteMap {
     return {
       clocks: Object.create(null),
+      duplicates: Object.create(null),
       files: Object.create(null),
       map: Object.create(null),
       mocks: Object.create(null),
@@ -734,6 +840,8 @@ class HasteMap extends EventEmitter {
   static H: HType;
   static ModuleMap: Class<HasteModuleMap>;
 }
+
+const copy = object => Object.assign(Object.create(null), object);
 
 HasteMap.H = H;
 HasteMap.ModuleMap = HasteModuleMap;

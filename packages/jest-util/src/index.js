@@ -8,16 +8,16 @@
  * @flow
  */
 
-const mkdirp = require('mkdirp');
-const Console = require('./Console');
-const FakeTimers = require('./FakeTimers');
-const NullConsole = require('./NullConsole');
+import mkdirp from 'mkdirp';
 
-const clearLine = require('./clearLine');
-const formatTestResults = require('./formatTestResults');
-const installCommonGlobals = require('./installCommonGlobals');
-const setGlobal = require('./setGlobal');
-const validateCLIOptions = require('./validateCLIOptions');
+import Console from './Console';
+import FakeTimers from './fake_timers';
+import NullConsole from './null_console';
+import clearLine from './clear_line';
+import formatTestResults from './format_test_results';
+import installCommonGlobals from './install_common_globals';
+import setGlobal from './set_global';
+import validateCLIOptions from './validate_cli_options';
 
 const createDirectory = (path: string) => {
   try {

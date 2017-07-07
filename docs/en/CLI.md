@@ -35,7 +35,7 @@ Run tests related to `path/to/fileA.js` and `path/to/fileB.js`:
 jest --findRelatedTests path/to/fileA.js path/to/fileB.js
 ```
 
-Run tests that match this spec name (match against the name in describe and it, basically).
+Run tests that match this spec name (match against the name in `describe` or `test`, basically).
 ```bash
 jest -t name-of-spec
 ```
@@ -163,6 +163,10 @@ Activates notifications for test results. Good for when you don't want your cons
 ### `--onlyChanged`
 
 Alias: `-o`. Attempts to identify which tests to run based on which files have changed in the current repository. Only works if you're running tests in a git/hg repository at the moment and requires a static dependency graph (ie. no dynamic requires).
+
+### `--projects <project1> ... <projectN>`
+
+Run tests from one or more projects.
 
 ### `--runInBand`
 

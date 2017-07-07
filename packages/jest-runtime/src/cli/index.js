@@ -11,16 +11,16 @@
 import type {Argv} from 'types/Argv';
 import type {EnvironmentClass} from 'types/Environment';
 
-const os = require('os');
-const path = require('path');
-const chalk = require('chalk');
-const yargs = require('yargs');
+import os from 'os';
+import path from 'path';
+import chalk from 'chalk';
+import yargs from 'yargs';
+import {Console, setGlobal, validateCLIOptions} from 'jest-util';
+import {readConfig} from 'jest-config';
+import Runtime from '../';
+import args from './args';
 
-const {Console, setGlobal, validateCLIOptions} = require('jest-util');
-const {readConfig} = require('jest-config');
 const VERSION = (require('../../package.json').version: string);
-const Runtime = require('../');
-const args = require('./args');
 
 function run(cliArgv?: Argv, cliInfo?: Array<string>) {
   let argv;
@@ -83,7 +83,7 @@ function run(cliArgv?: Argv, cliInfo?: Array<string>) {
       runtime.requireModule(filePath);
     })
     .catch(e => {
-      console.error(chalk.red(e));
+      console.error(chalk.red(e.stack || e));
       process.on('exit', () => process.exit(1));
     });
 }

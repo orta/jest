@@ -11,10 +11,10 @@
 import type {Glob, Path} from 'types/Config';
 import type {AssertionResult, TestResult} from 'types/TestResult';
 
-const path = require('path');
-const chalk = require('chalk');
-const micromatch = require('micromatch');
-const slash = require('slash');
+import path from 'path';
+import chalk from 'chalk';
+import micromatch from 'micromatch';
+import slash from 'slash';
 
 type StackTraceConfig = {
   rootDir: string,
@@ -79,9 +79,10 @@ const formatExecError = (
   }
 
   message = message.split(/\n/).map(line => MESSAGE_INDENT + line).join('\n');
-  stack = stack && !options.noStackTrace
-    ? '\n' + formatStackTrace(stack, config, options, testPath)
-    : '';
+  stack =
+    stack && !options.noStackTrace
+      ? '\n' + formatStackTrace(stack, config, options, testPath)
+      : '';
 
   if (message.match(/^\s*$/) && stack.match(/^\s*$/)) {
     // this can happen if an empty object is thrown.

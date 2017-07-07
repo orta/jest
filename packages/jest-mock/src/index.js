@@ -233,9 +233,11 @@ class ModuleMockerClass {
       let f;
       /* eslint-enable prefer-const */
 
-      const prototype = (metadata.members &&
-        metadata.members.prototype &&
-        metadata.members.prototype.members) || {};
+      const prototype =
+        (metadata.members &&
+          metadata.members.prototype &&
+          metadata.members.prototype.members) ||
+        {};
       const prototypeSlots = getSlots(prototype);
       const mocker = this;
       const mockConstructor = function() {
@@ -262,18 +264,17 @@ class ModuleMockerClass {
           );
         }
 
-        let returnValue;
+        const returnValue = mockConfig.defaultReturnValue;
         // If return value is last set, either specific or default, i.e.
         // mockReturnValueOnce()/mockReturnValue() is called and no
         // mockImplementationOnce()/mockImplementation() is called after that.
         // use the set return value.
-        if (mockConfig.isReturnValueLastSet) {
-          returnValue = mockConfig.specificReturnValues.shift();
-          if (returnValue === undefined) {
-            returnValue = mockConfig.defaultReturnValue;
-          }
+        if (mockConfig.specificReturnValues.length) {
+          return mockConfig.specificReturnValues.shift();
+        }
 
-          return returnValue;
+        if (mockConfig.isReturnValueLastSet) {
+          return mockConfig.defaultReturnValue;
         }
 
         // If mockImplementationOnce()/mockImplementation() is last set,
@@ -324,7 +325,6 @@ class ModuleMockerClass {
       f.mockReturnValueOnce = value => {
         // next function call will return this value or default return value
         const mockConfig = this._ensureMockConfig(f);
-        mockConfig.isReturnValueLastSet = true;
         mockConfig.specificReturnValues.push(value);
         return f;
       };
@@ -350,6 +350,7 @@ class ModuleMockerClass {
         // next function call will use mock implementation return value
         const mockConfig = this._ensureMockConfig(f);
         mockConfig.isReturnValueLastSet = false;
+        mockConfig.defaultReturnValue = undefined;
         mockConfig.mockImpl = fn;
         return f;
       };
@@ -377,9 +378,7 @@ class ModuleMockerClass {
     mockConstructor: () => any,
   ): any {
     let name = metadata.name;
-    // Special case functions named `mockConstructor` to guard for infinite
-    // loops.
-    if (!name || name === MOCK_CONSTRUCTOR_NAME) {
+    if (!name) {
       return mockConstructor;
     }
 
@@ -393,6 +392,12 @@ class ModuleMockerClass {
         // Call bind() just to alter the function name.
         bindCall = '.bind(null)';
       } while (name && name.startsWith(boundFunctionPrefix));
+    }
+
+    // Special case functions named `mockConstructor` to guard for infinite
+    // loops.
+    if (name === MOCK_CONSTRUCTOR_NAME) {
+      return mockConstructor;
     }
 
     // It's a syntax error to define functions with a reserved keyword

@@ -32,8 +32,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* @flow */
 /* eslint-disable sort-keys */
 
-const ExpectationFailed = require('../ExpectationFailed');
-const expectationResultFactory = require('../expectationResultFactory');
+import ExpectationFailed from '../expectation_failed';
+
+import expectationResultFactory from '../expectation_result_factory';
 
 function Suite(attrs: Object) {
   this.id = attrs.id;

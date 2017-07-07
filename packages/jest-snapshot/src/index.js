@@ -12,19 +12,18 @@ import type {HasteFS} from 'types/HasteMap';
 import type {MatcherState} from 'types/Matchers';
 import type {Path, SnapshotUpdateState} from 'types/Config';
 
-const fs = require('fs');
-const path = require('path');
-const diff = require('jest-diff');
-const {
+import fs from 'fs';
+import path from 'path';
+import diff from 'jest-diff';
+import {
   EXPECTED_COLOR,
   ensureNoExpected,
   matcherHint,
   RECEIVED_COLOR,
-} = require('jest-matcher-utils');
-
-const SnapshotState = require('./State');
-const {addSerializer, getSerializers} = require('./plugins');
-const {SNAPSHOT_EXTENSION} = require('./utils');
+} from 'jest-matcher-utils';
+import SnapshotState from './State';
+import {addSerializer, getSerializers} from './plugins';
+import {SNAPSHOT_EXTENSION} from './utils';
 
 const fileExists = (filePath: Path, hasteFS: HasteFS): boolean =>
   hasteFS.exists(filePath) || fs.existsSync(filePath);
@@ -97,9 +96,9 @@ const toMatchSnapshot = function(received: any, testName?: string) {
       `${RECEIVED_COLOR('Received value')} does not match ` +
       `${EXPECTED_COLOR('stored snapshot ' + count)}.\n\n` +
       (diffMessage ||
-        RECEIVED_COLOR('- ' + (expected || '')) +
+        EXPECTED_COLOR('- ' + (expected || '')) +
           '\n' +
-          EXPECTED_COLOR('+ ' + actual));
+          RECEIVED_COLOR('+ ' + actual));
   }
   // Passing the the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,

@@ -8,14 +8,15 @@
  * @flow
  */
 
-const Runtime = require('jest-runtime');
+import Runtime from 'jest-runtime';
 
 const usage = 'Usage: $0 [--config=<pathToConfigFile>]';
 
 const options = Object.assign({}, Runtime.getCLIOptions(), {
   replname: {
     alias: 'r',
-    description: 'The "name" of the file given to transformers to be ' +
+    description:
+      'The "name" of the file given to transformers to be ' +
       'transformed. For example, "repl.ts" if using a Typescript transformer.',
     type: 'string',
   },

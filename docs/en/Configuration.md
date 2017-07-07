@@ -316,7 +316,7 @@ class MyCustomReporter {
     console.log('Custom reporter output:');
     console.log('GlobalConfig: ', this._globalConfig);
     console.log('Options: ', this._options);
-  },
+  }
 }
 
 module.exports = MyCustomReporter;
@@ -517,6 +517,18 @@ inside of `__tests__` folders, as well as any files with a suffix of `.test` or 
 (e.g. `Component.test.js` or `Component.spec.js`). It will also find files called `test.js`
 or `spec.js`. See also [`testMatch` [array<string>]](#testmatch-array-string), but note
 that you cannot specify both options.
+
+The following is a visualization of the default regex:
+
+```
+├── __tests__
+│   └── component.spec.js # test
+│   └── anything # test
+├── package.json # not test
+├── foo.test.js # test
+├── bar.spec.jsx # test
+└── component.js # not test
+```
 
 ### `testResultsProcessor` [string]
 Default: `undefined`
