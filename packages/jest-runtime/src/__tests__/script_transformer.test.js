@@ -14,8 +14,8 @@ jest
   .mock('fs', () =>
     // Node 10.5.x compatibility
     Object.assign({}, jest.genMockFromModule('fs'), {
-      ReadStream: require.requireActual('fs').ReadStream,
-      WriteStream: require.requireActual('fs').WriteStream,
+      ReadStream: jest.requireActual('fs').ReadStream,
+      WriteStream: jest.requireActual('fs').WriteStream,
     }),
   )
   .mock('graceful-fs')
@@ -23,7 +23,7 @@ jest
     getCacheFilePath: (cacheDir, baseDir, version) => cacheDir + baseDir,
   }))
   .mock('jest-util', () => {
-    const util = require.requireActual('jest-util');
+    const util = jest.requireActual('jest-util');
     util.createDirectory = jest.fn();
     return util;
   })
@@ -394,7 +394,7 @@ describe('ScriptTransformer', () => {
     const content =
       'var x = 1;\n' +
       '//# sourceMappingURL=data:application/json;base64,' +
-      new Buffer(sourceMap).toString('base64');
+      Buffer.from(sourceMap).toString('base64');
 
     require('preprocessor-with-sourcemaps').process.mockReturnValue(content);
 
@@ -508,5 +508,26 @@ describe('ScriptTransformer', () => {
     expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
     expect(fs.readFileSync).not.toBeCalledWith(cachePath, 'utf8');
     expect(writeFileAtomic.sync).toBeCalled();
+  });
+
+  it('does not reuse the in-memory cache between different projects', () => {
+    const scriptTransformer = new ScriptTransformer(
+      Object.assign({}, config, {
+        transform: [['^.+\\.js$', 'test_preprocessor']],
+      }),
+    );
+
+    scriptTransformer.transform('/fruits/banana.js', {});
+
+    const anotherScriptTransformer = new ScriptTransformer(
+      Object.assign({}, config, {
+        transform: [['^.+\\.js$', 'css-preprocessor']],
+      }),
+    );
+
+    anotherScriptTransformer.transform('/fruits/banana.js', {});
+
+    expect(fs.readFileSync.mock.calls.length).toBe(2);
+    expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
   });
 });

@@ -50,13 +50,12 @@ const users = {
 export default function request(url) {
   return new Promise((resolve, reject) => {
     const userID = parseInt(url.substr('/users/'.length), 10);
-    process.nextTick(
-      () =>
-        users[userID]
-          ? resolve(users[userID])
-          : reject({
-              error: 'User with ' + userID + ' not found.',
-            }),
+    process.nextTick(() =>
+      users[userID]
+        ? resolve(users[userID])
+        : reject({
+            error: 'User with ' + userID + ' not found.',
+          }),
     );
   });
 }
@@ -117,7 +116,7 @@ Errors can be handled using the `.catch` method. Make sure to add `expect.assert
 
 ```js
 // Testing for async errors using Promise.catch.
-test('tests error with promises', async () => {
+test('tests error with promises', () => {
   expect.assertions(1);
   return user.getUserName(2).catch(e =>
     expect(e).toEqual({

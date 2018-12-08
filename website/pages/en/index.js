@@ -17,6 +17,8 @@ const translation = require('../../server/translation.js');
 const backers = require(process.cwd() + '/backers.json');
 
 const siteConfig = require(process.cwd() + '/siteConfig.js');
+const idx = (target, path) =>
+  path.reduce((obj, key) => (obj && obj[key] ? obj[key] : null), target);
 
 class Button extends React.Component {
   render() {
@@ -47,25 +49,29 @@ class Contributors extends React.Component {
           </translate>
         </p>
         <div>
-          {backers.filter(b => b.tier === 'sponsor').map(b => (
-            <a
-              key={b.id}
-              className="sponsor-item"
-              title={`$${b.totalDonations / 100} by ${b.name || b.slug}`}
-              target="_blank"
-              href={b.website || `https://opencollective.com/${b.slug}`}
-            >
-              {
-                <img
-                  className="sponsor-avatar"
-                  src={b.avatar}
-                  alt={
-                    b.name || b.slug ? `${b.name || b.slug}'s avatar` : 'avatar'
-                  }
-                />
-              }
-            </a>
-          ))}
+          {backers
+            .filter(b => b.tier === 'sponsor')
+            .map(b => (
+              <a
+                key={b.id}
+                className="sponsor-item"
+                title={`$${b.totalDonations / 100} by ${b.name || b.slug}`}
+                target="_blank"
+                href={b.website || `https://opencollective.com/${b.slug}`}
+              >
+                {
+                  <img
+                    className="sponsor-avatar"
+                    src={b.avatar}
+                    alt={
+                      b.name || b.slug
+                        ? `${b.name || b.slug}'s avatar`
+                        : 'avatar'
+                    }
+                  />
+                }
+              </a>
+            ))}
         </div>
         <div className="support">
           <a
@@ -84,25 +90,29 @@ class Contributors extends React.Component {
           </translate>
         </p>
         <div>
-          {backers.filter(b => b.tier === 'backer').map(b => (
-            <a
-              key={b.id}
-              className="backer-item"
-              title={`$${b.totalDonations / 100} by ${b.name || b.slug}`}
-              target="_blank"
-              href={b.website || `https://opencollective.com/${b.slug}`}
-            >
-              {
-                <img
-                  className="backer-avatar"
-                  src={b.avatar}
-                  alt={
-                    b.name || b.slug ? `${b.name || b.slug}'s avatar` : 'avatar'
-                  }
-                />
-              }
-            </a>
-          ))}
+          {backers
+            .filter(b => b.tier === 'backer')
+            .map(b => (
+              <a
+                key={b.id}
+                className="backer-item"
+                title={`$${b.totalDonations / 100} by ${b.name || b.slug}`}
+                target="_blank"
+                href={b.website || `https://opencollective.com/${b.slug}`}
+              >
+                {
+                  <img
+                    className="backer-avatar"
+                    src={b.avatar}
+                    alt={
+                      b.name || b.slug
+                        ? `${b.name || b.slug}'s avatar`
+                        : 'avatar'
+                    }
+                  />
+                }
+              </a>
+            ))}
           <div>
             <a
               className="support-button"
@@ -130,10 +140,11 @@ class HomeSplash extends React.Component {
               <h2 className="projectTitle">
                 {siteConfig.title}
                 <small>
-                  {
-                    translation[this.props.language]['localized-strings']
-                      .tagline
-                  }
+                  {idx(translation, [
+                    this.props.language,
+                    'localized-strings',
+                    'tagline',
+                  ]) || siteConfig.tagline}
                 </small>
               </h2>
               <div className="section promoSection">
@@ -290,7 +301,7 @@ class Index extends React.Component {
                   content: (
                     <translate>
                       Easily create code coverage reports using
-                      [`--coverage`](https://facebook.github.io/jest/docs/en/cli.html#coverage).
+                      [`--coverage`](https://jestjs.io/docs/en/cli.html#coverage).
                       No additional setup or libraries needed! Jest can collect
                       code coverage information from entire projects, including
                       untested files.
@@ -358,10 +369,9 @@ class Index extends React.Component {
                 {
                   content: (
                     <translate>
-                      Powerful [mocking
-                      library](/jest/docs/en/mock-functions.html) for functions
-                      and modules. Mock React Native components using
-                      `jest-react-native`.
+                      Powerful [mocking library](/docs/en/mock-functions.html)
+                      for functions and modules. Mock React Native components
+                      using `jest-react-native`.
                     </translate>
                   ),
                   image: '/img/content/feature-mocking.png',

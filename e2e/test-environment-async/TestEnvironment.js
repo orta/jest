@@ -1,3 +1,5 @@
+// Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
+
 'use strict';
 
 const fs = require('fs');
@@ -5,7 +7,7 @@ const os = require('os');
 const mkdirp = require('mkdirp');
 const JSDOMEnvironment = require('jest-environment-jsdom');
 
-const DIR = os.tmpdir() + '/jest';
+const DIR = os.tmpdir() + '/jest-test-environment';
 
 class TestEnvironment extends JSDOMEnvironment {
   constructor(config) {
