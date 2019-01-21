@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -7,8 +7,8 @@
  * @flow
  */
 
-import stripAnsi from 'strip-ansi';
-import diff from '../';
+const stripAnsi = require('strip-ansi');
+const diff = require('../');
 
 const NO_DIFF_MESSAGE = 'Compared values have no visual difference.';
 
@@ -48,9 +48,12 @@ describe('no visual difference', () => {
     [[], []],
     [[1, 2], [1, 2]],
     [11, 11],
+    [NaN, NaN],
+    [Number.NaN, NaN],
     [() => {}, () => {}],
     [null, null],
     [undefined, undefined],
+    [false, false],
     [{a: 1}, {a: 1}],
     [{a: {b: 5}}, {a: {b: 5}}],
   ].forEach(values => {
@@ -178,13 +181,17 @@ describe('objects', () => {
 });
 
 test('numbers', () => {
-  const result = diff(123, 234);
-  expect(result).toBe(null);
+  expect(stripped(1, 2)).toEqual(expect.stringContaining('- 1\n+ 2'));
+});
+
+test('-0 and 0', () => {
+  expect(stripped(-0, 0)).toEqual(expect.stringContaining('- -0\n+ 0'));
 });
 
 test('booleans', () => {
-  const result = diff(true, false);
-  expect(result).toBe(null);
+  expect(stripped(false, true)).toEqual(
+    expect.stringContaining('- false\n+ true'),
+  );
 });
 
 describe('multiline string non-snapshot', () => {

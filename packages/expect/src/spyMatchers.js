@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -13,6 +13,7 @@ const CALL_PRINT_LIMIT = 3;
 const RETURN_PRINT_LIMIT = 5;
 const LAST_CALL_PRINT_LIMIT = 1;
 import {
+  diff,
   ensureExpectedIsNumber,
   ensureNoExpected,
   EXPECTED_COLOR,
@@ -26,7 +27,6 @@ import {
 } from 'jest-matcher-utils';
 import {equals} from './jasmineUtils';
 import {iterableEquality, partition, isOneline} from './utils';
-import diff from 'jest-diff';
 
 const createToBeCalledMatcher = matcherName => (received, expected) => {
   ensureNoExpected(expected, matcherName);

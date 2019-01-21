@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -35,22 +35,18 @@ const PLUGINS = [
 const FORMAT_OPTIONS = {
   plugins: PLUGINS,
 };
-const FORMAT_OPTIONS_0 = Object.assign({}, FORMAT_OPTIONS, {
-  indent: 0,
-});
+const FORMAT_OPTIONS_0 = {...FORMAT_OPTIONS, indent: 0};
 const FALLBACK_FORMAT_OPTIONS = {
   callToJSON: false,
   maxDepth: 10,
   plugins: PLUGINS,
 };
-const FALLBACK_FORMAT_OPTIONS_0 = Object.assign({}, FALLBACK_FORMAT_OPTIONS, {
-  indent: 0,
-});
+const FALLBACK_FORMAT_OPTIONS_0 = {...FALLBACK_FORMAT_OPTIONS, indent: 0};
 
 // Generate a string that will highlight the difference between two values
 // with green and red. (similar to how github does code diffing)
-export default function diff(a: any, b: any, options: ?DiffOptions): ?string {
-  if (a === b) {
+function diff(a: any, b: any, options: ?DiffOptions): ?string {
+  if (Object.is(a, b)) {
     return NO_DIFF_MESSAGE;
   }
 
@@ -87,9 +83,9 @@ export default function diff(a: any, b: any, options: ?DiffOptions): ?string {
   switch (aType) {
     case 'string':
       return diffStrings(a, b, options);
-    case 'number':
     case 'boolean':
-      return null;
+    case 'number':
+      return comparePrimitive(a, b, options);
     case 'map':
       return compareObjects(sortMap(a), sortMap(b), options);
     case 'set':
@@ -97,6 +93,18 @@ export default function diff(a: any, b: any, options: ?DiffOptions): ?string {
     default:
       return compareObjects(a, b, options);
   }
+}
+
+function comparePrimitive(
+  a: number | boolean,
+  b: number | boolean,
+  options: ?DiffOptions,
+) {
+  return diffStrings(
+    prettyFormat(a, FORMAT_OPTIONS),
+    prettyFormat(b, FORMAT_OPTIONS),
+    options,
+  );
 }
 
 function sortMap(map) {
@@ -144,3 +152,5 @@ function compareObjects(a: Object, b: Object, options: ?DiffOptions) {
 
   return diffMessage;
 }
+
+module.exports = diff;
