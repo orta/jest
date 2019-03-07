@@ -6,10 +6,17 @@
     "url": "https://github.com/facebook/jest.git",
     "directory": "packages/jest-phabricator"
   },
+  "types": "build/index.d.ts",
+  "dependencies": {
+    "@jest/test-result": "^24.1.0"
+  },
   "engines": {
     "node": ">= 6"
   },
   "license": "MIT",
   "main": "build/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "gitHead": "634e5a54f46b2a62d1dc81a170562e6f4e55ad60"
 }

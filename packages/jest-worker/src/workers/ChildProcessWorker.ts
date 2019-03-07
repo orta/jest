@@ -40,10 +40,10 @@ import {
  * same call skip it.
  */
 export default class ChildProcessWorker implements WorkerInterface {
-  _child!: ChildProcess;
-  _options: WorkerOptions;
-  _onProcessEnd!: OnEnd;
-  _retries!: number;
+  private _child!: ChildProcess;
+  private _options: WorkerOptions;
+  private _onProcessEnd!: OnEnd;
+  private _retries!: number;
 
   constructor(options: WorkerOptions) {
     this._options = options;
@@ -158,10 +158,20 @@ export default class ChildProcessWorker implements WorkerInterface {
   }
 
   getStdout(): NodeJS.ReadableStream {
+    if (this._child.stdout === null) {
+      throw new Error(
+        'stdout is null - this should never happen. Please open up an issue at https://github.com/facebook/jest',
+      );
+    }
     return this._child.stdout;
   }
 
   getStderr(): NodeJS.ReadableStream {
+    if (this._child.stderr === null) {
+      throw new Error(
+        'stderr is null - this should never happen. Please open up an issue at https://github.com/facebook/jest',
+      );
+    }
     return this._child.stderr;
   }
 }
